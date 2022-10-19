@@ -1,5 +1,17 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
+const table = require("console.table");
+require("dotenv").config();
+
+const db = mysql.createConnection(
+    {
+        host: 'localhost',
+        user: process.env.USER,
+        password: process.env.PASSWORD,
+        database: process.env.DATABASE
+    },
+    console.log(`Connected to the classlist_db database.`)
+);
 
 const menuPrompt = [
     {
@@ -24,9 +36,15 @@ async function menu(){
         switch(responses["menu"]){
             case "View all Departments":
                 // TODO: Display a formatted table showing department names and ids
+                db.query("SELECT id, name as 'Department Name' FROM department", (err, results) =>{
+                    console.table("Departments", results);
+                });
                 break;
             case "View all Roles":
                 // TODO: Display job title, role id, the department that role belongs to, and the salary for that role
+                db.query("SELECT role.id AS id, role.title as Title, role.salary as Salary, department.name as Department FROM role JOIN department on role.department_id = department.id", (err, results) =>{
+                    console.table("Departments", results);
+                });
                 break;
             case "View all Employees":
                 // TODO: Display a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
@@ -48,3 +66,5 @@ async function menu(){
         console.error(err);
     }
 }
+
+menu();
