@@ -1,9 +1,11 @@
+// Import required packages
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const qu = require("./queries");
 require("console.table");
 require("dotenv").config();
 
+// Give database information it needs to connect
 const db = mysql.createConnection(
     {
         host: 'localhost',
@@ -14,6 +16,7 @@ const db = mysql.createConnection(
     console.log(`Connected to the classlist_db database.`)
 );
 
+// Prompts for inquirer
 const menuPrompt = [
     {
         type: "list",
@@ -32,6 +35,7 @@ const menuPrompt = [
     }
 ];
 
+// Prompts for adding a department
 const departmentPrompt = [
     {
         type: "input",
@@ -40,6 +44,7 @@ const departmentPrompt = [
     }
 ]
 
+// Prompts for adding a role
 const rolePrompt = [
     {
         type: "input",
@@ -59,6 +64,7 @@ const rolePrompt = [
     },
 ]
 
+// Prompts for adding an employee
 const employeePrompt = [
     {
         type: "input",
@@ -84,6 +90,7 @@ const employeePrompt = [
     },
 ]
 
+// Prompts for updating an employee
 const updateEmployeePrompt = [
     {
         type: "list",
@@ -99,81 +106,93 @@ const updateEmployeePrompt = [
     }
 ]
 
-async function menu(){
+// Initialization function
+async function init(){
+    // Loop until the user exits
     let continueLooping = true;
     while(continueLooping) {
         try {
+            // Get the user's choice from the menu
             const responses = await inquirer.prompt(menuPrompt);
-            // const responses = {menu: "Add an Employee"};
+            // Switch through the responses in menu
             switch (responses["menu"]) {
+                // Displays all departments
                 case "View all Departments": {
                     db.query("SELECT id, name as 'Department Name' FROM department", (err, results) => {
-                        console.table("\nDepartments", results);
+                        console.table("\nDepartments", results); // Display results in a table
                     });
                     break;
                 }
+                // Displays all roles
                 case "View all Roles": {
                     db.query("SELECT role.id AS id, role.title as Title, role.salary as Salary, department.name as Department FROM role JOIN department on role.department_id = department.id", (err, results) => {
-                        console.table("\nRoles", results);
+                        console.table("\nRoles", results); // Display results in a table
                     });
                     break;
                 }
+                // Displays all employees
                 case "View all Employees": {
                     db.query("SELECT employee.id as id, employee.first_name as 'First Name', employee.last_name as 'Last Name', title as 'Title', salary as Salary, name as Department, CONCAT(e.first_name, ' ', e.last_name) as Manager FROM employee JOIN role r on employee.role_id = r.id JOIN department d on d.id = r.department_id LEFT JOIN employee e on employee.manager_id = e.id", (err, results) => {
-                        console.table("\nEmployees", results);
+                        console.table("\nEmployees", results); // Display results in a table
                     });
                     break;
                 }
+                // Adds a department
                 case "Add a Department": {
-                    const {newDepartment} = await inquirer.prompt(departmentPrompt);
+                    const {newDepartment} = await inquirer.prompt(departmentPrompt); // Get the department name from the prompt
                     db.query("INSERT INTO department (name) value (?)", newDepartment, (err) => {
-                        err ? console.error(err) : true;
+                        err ? console.error(err) : true; // Log any errors
                     });
                     console.log(`Added department ${newDepartment}.`);
                     break;
                 }
+                // Adds a role
                 case "Add a Role": {
-                    const departments = await qu.getDepartments();
+                    const departments = await qu.getDepartments(); // Wait for the departments to be retrieved
                     departments.forEach(department => {
-                        rolePrompt[2].choices.push({name: department.name, value: department.id})
+                        rolePrompt[2].choices.push({name: department.name, value: department.id}); // Add the departments to the prompt
                     });
-                    const {roleName, salary, departmentId} = await inquirer.prompt(rolePrompt);
+                    const {roleName, salary, departmentId} = await inquirer.prompt(rolePrompt); // Get the results from the rolePrompt
+                    // Add the role to the database
                     db.query("INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);", [roleName, salary, departmentId], (err) => {
-                        err ? console.error(err) : true;
+                        err ? console.error(err) : true; // Log any errors
                     });
                     console.log(`Added role ${roleName}.`);
                     break;
                 }
+                // Adds an employee
                 case "Add an Employee": {
-                    const roles = await qu.getRoles();
+                    const roles = await qu.getRoles(); // Wait for the roles to be retrieved
                     roles.forEach(r => {
-                        employeePrompt[2].choices.push({name: r.title, value: r.id});
+                        employeePrompt[2].choices.push({name: r.title, value: r.id}); // Add the roles to the prompt
                     });
-                    const employees = await qu.getEmployeeNames();
+                    const employees = await qu.getEmployeeNames(); // Wait for the employees to be retrieved
                     employees.forEach(emp => {
-                        employeePrompt[3].choices.push({name: emp.Name, value: emp.id});
+                        employeePrompt[3].choices.push({name: emp.Name, value: emp.id}); // Add the employees to the prompt
                     });
                     const {first_name, last_name, role, manager} = await inquirer.prompt(employeePrompt);
                     db.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [first_name, last_name, role, manager], (err, result) => {
-                        err ? console.error(err) : true;
+                        err ? console.error(err) : true; // Log any errors
                     });
                     break;
                 }
-                case "Update an Employee Role": {// TODO: I am prompted to select an employee to update and their new role and this information is updated in the database
-                    const employees = await qu.getEmployeeNames();
+                // Updates an employee
+                case "Update an Employee Role": {
+                    const employees = await qu.getEmployeeNames(); // Wait for the employees to be retrieved
                     employees.forEach(emp =>{
-                        updateEmployeePrompt[0].choices.push({name: emp.Name, value: emp.id});
+                        updateEmployeePrompt[0].choices.push({name: emp.Name, value: emp.id}); // Add the employees to the prompt
                     });
-                    const roles = await qu.getRoles();
+                    const roles = await qu.getRoles(); // Wait for the roles to be retrieved
                     roles.forEach(role =>{
-                        updateEmployeePrompt[1].choices.push({name: role.title, value: role.id});
+                        updateEmployeePrompt[1].choices.push({name: role.title, value: role.id}); // Add the roles to the prompt
                     });
-                    const {id, role_id} = await inquirer.prompt(updateEmployeePrompt);
-                    db.query("UPDATE employee SET role_id = ? WHERE id = ?", [role_id, id], (err, result)=>{
+                    const {id, role_id} = await inquirer.prompt(updateEmployeePrompt); // Get the results from the prompt
+                    db.query("UPDATE employee SET role_id = ? WHERE id = ?", [role_id, id], (err)=>{
                         err ? console.error(err) : true;
                     });
                     break;
                 }
+                // Quits the loop
                 case "Quit": {
                     continueLooping = false;
                     break;
@@ -183,7 +202,10 @@ async function menu(){
             console.error(`Error: ${err}`);
         }
     }
-    process.exit(0);
 }
 
-menu();
+// Start the program
+init().then(()=>{
+    console.log("Goodbye!");
+    process.exit(0);
+});
