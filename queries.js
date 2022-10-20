@@ -7,7 +7,7 @@ const db = mysql.createConnection(
         password: process.env.PASSWORD,
         database: process.env.DATABASE
     },
-    console.log(`Connected to the classlist_db database.`)
+    console.log(`Connected to the ${process.env.DATABASE} database.`)
 );
 
 async function getRoles() {
