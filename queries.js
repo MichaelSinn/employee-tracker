@@ -9,6 +9,7 @@ const db = mysql.createConnection(
     }
 );
 
+// Gets all roles' id and titles
 async function getRoles() {
     return new Promise((resolve, reject) => {
         try {
@@ -21,6 +22,7 @@ async function getRoles() {
     });
 }
 
+// Gets all employee's id and full names
 async function getEmployeeNames() {
     return new Promise((resolve, reject) => {
         try {
@@ -33,6 +35,7 @@ async function getEmployeeNames() {
     });
 }
 
+// Gets all departments
 async function getDepartments(){
     return new Promise((resolve, reject) => {
         try {
