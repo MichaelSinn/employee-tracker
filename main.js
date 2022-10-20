@@ -171,7 +171,7 @@ async function init(){
                         employeePrompt[3].choices.push({name: emp.Name, value: emp.id}); // Add the employees to the prompt
                     });
                     const {first_name, last_name, role, manager} = await inquirer.prompt(employeePrompt);
-                    db.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [first_name, last_name, role, manager], (err, result) => {
+                    db.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [first_name, last_name, role, manager], (err) => {
                         err ? console.error(err) : true; // Log any errors
                     });
                     break;
