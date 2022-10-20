@@ -1,5 +1,6 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
+const qu = require("./queries");
 require("console.table");
 require("dotenv").config();
 
@@ -51,9 +52,35 @@ const rolePrompt = [
         message: "Salary:"
     },
     {
+        type: "list",
+        name: "departmentId",
+        message: "Department:",
+        choices: []
+    },
+]
+
+const employeePrompt = [
+    {
         type: "input",
-        name: "departmentName",
-        message: "Department:"
+        name: "first_name",
+        message: "First name:"
+    },
+    {
+        type: "input",
+        name: "last_name",
+        message: "Last name:"
+    },
+    {
+        type: "list",
+        name: "role",
+        message: "Role:",
+        choices: []
+    },
+    {
+        type: "list",
+        name: "manager",
+        message: "Manager name:",
+        choices: []
     },
 ]
 
@@ -62,6 +89,7 @@ async function menu(){
     while(continueLooping) {
         try {
             const responses = await inquirer.prompt(menuPrompt);
+            // const responses = {menu: "Add an Employee"};
             switch (responses["menu"]) {
                 case "View all Departments":
                     db.query("SELECT id, name as 'Department Name' FROM department", (err, results) => {
@@ -86,26 +114,43 @@ async function menu(){
                     console.log(`Added department ${newDepartment}.`);
                     break;
                 case "Add a Role":
-                    const {roleName, salary, departmentName} = await inquirer.prompt(rolePrompt);
-                    db.query("SELECT id FROM department WHERE name = ?", departmentName, (err, result)=>{
-                        db.query("INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);", [roleName, salary, result[0].id], (err) => {
-                            err ? console.error(err) : true;
-                        });
+                    const departments = await qu.getDepartments();
+                    departments.forEach(department =>{
+                        rolePrompt[2].choices.push({name: department.name, value: department.id})
+                    });
+                    const {roleName, salary, departmentId} = await inquirer.prompt(rolePrompt);
+                    db.query("INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);", [roleName, salary, departmentId], (err) => {
+                        err ? console.error(err) : true;
                     });
                     console.log(`Added role ${roleName}.`);
                     break;
                 case "Add an Employee":
                     // TODO: I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
+                    const roles = await qu.getRoles();
+                    roles.forEach(r =>{
+                        employeePrompt[2].choices.push({name: r.title, value: r.id});
+                    });
+                    const employees = await qu.getEmployeeNames();
+                    employees.forEach(emp =>{
+                        employeePrompt[3].choices.push({name: emp.Name, value: emp.id});
+                    });
+                    const {first_name, last_name, role, manager} = await inquirer.prompt(employeePrompt);
+                    db.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [first_name, last_name, role, manager], (err, result)=>{
+                        err ? console.error(err) : true;
+                    });
                     break;
                 case "Update an Employee Role":
                     // TODO: I am prompted to select an employee to update and their new role and this information is updated in the database
+                    db.query("", (err, result)=>{
+
+                    });
                     break;
                 case "Quit":
                     continueLooping = false;
                     break;
             }
         } catch (err) {
-            console.error(err);
+            console.error(`Error: ${err}`);
         }
     }
     process.exit(0);
