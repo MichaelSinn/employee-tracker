@@ -1,6 +1,6 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
-const table = require("console.table");
+require("console.table");
 require("dotenv").config();
 
 const db = mysql.createConnection(
@@ -39,6 +39,24 @@ const departmentPrompt = [
     }
 ]
 
+const rolePrompt = [
+    {
+        type: "input",
+        name: "roleName",
+        message: "Name of role:"
+    },
+    {
+        type: "input",
+        name: "salary",
+        message: "Salary:"
+    },
+    {
+        type: "input",
+        name: "departmentName",
+        message: "Department:"
+    },
+]
+
 async function menu(){
     let continueLooping = true;
     while(continueLooping) {
@@ -62,14 +80,19 @@ async function menu(){
                     break;
                 case "Add a Department":
                     const {newDepartment} = await inquirer.prompt(departmentPrompt);
-                    db.query("INSERT INTO department (name) value (?)", newDepartment, (err, result) => {
+                    db.query("INSERT INTO department (name) value (?)", newDepartment, (err) => {
                         err ? console.error(err) : true;
                     });
                     console.log(`Added department ${newDepartment}.`);
                     break;
                 case "Add a Role":
-                    // TODO: I am prompted to enter the name, salary, and department for the role and that role is added to the database
-
+                    const {roleName, salary, departmentName} = await inquirer.prompt(rolePrompt);
+                    db.query("SELECT id FROM department WHERE name = ?", departmentName, (err, result)=>{
+                        db.query("INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);", [roleName, salary, result[0].id], (err) => {
+                            err ? console.error(err) : true;
+                        });
+                    });
+                    console.log(`Added role ${roleName}.`);
                     break;
                 case "Add an Employee":
                     // TODO: I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
