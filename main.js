@@ -12,8 +12,7 @@ const db = mysql.createConnection(
         user: process.env.USER,
         password: process.env.PASSWORD,
         database: process.env.DATABASE
-    },
-    console.log(`Connected to the ${process.env.DATABASE} database.`)
+    }
 );
 
 // Prompts for inquirer
